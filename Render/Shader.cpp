@@ -5,6 +5,9 @@ Shader::Shader(const char* vertex_file_path, const char* fragment_file_path)
 	_id = LoadShader(vertex_file_path, fragment_file_path);
 }
 
+Shader::Shader(const char *file) {
+    _id = LoadComputeShader(file);
+}
 
 Shader::~Shader()
 {
@@ -99,3 +102,17 @@ GLint Shader::Check(GLuint ID)
 	}
 	return Result;
 }
+
+GLuint Shader::LoadComputeShader(const char *cs_file_path) {
+    GLuint compute_shader_id = glCreateShader(GL_COMPUTE_SHADER);
+    std::string compute_shader_code = ReadShaderFile(cs_file_path);
+    CompileShaders(compute_shader_id, compute_shader_code.c_str());
+    GLuint program_id = glCreateProgram();
+    glAttachShader(program_id, compute_shader_id);
+    glLinkProgram(program_id);
+    Check(program_id);
+    glDetachShader(program_id, compute_shader_id);
+    glDeleteShader(compute_shader_id);
+    return program_id;
+}
+

@@ -8,6 +8,7 @@
 class Shader
 {
 public:
+    Shader(const char* file);
 	Shader(const char* vertex_file_path, const char* fragment_file_path);
 	~Shader();
 	GLuint						GetShaderID() const;
@@ -18,6 +19,7 @@ private:
 	std::string					ReadShaderFile(const char* file_path);
 	void						CompileShaders(GLuint ID, const char* ShaderPointer);
 	GLint						Check(GLuint ID);
+	GLuint                      LoadComputeShader(const char* cs_file_path);
 	GLuint						_id;
 
 };

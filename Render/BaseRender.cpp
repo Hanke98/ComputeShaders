@@ -4,11 +4,11 @@
 
 #include "BaseRender.h"
 #include <iostream>
+#include <cassert>
 
 
 BaseRender::BaseRender(Param& param): 
         window(nullptr),
-        shader(nullptr),
         height(param.height),
         width(param.width),
         v_glsl(param.vertex_shader),
@@ -26,7 +26,7 @@ void BaseRender::Initialize() {
         std::cout << "init glfw error" << std::endl;
         return;
     }
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #ifdef __APPLE__
@@ -54,10 +54,15 @@ void BaseRender::Initialize() {
 
     glEnable(GL_DEPTH_TEST);
 
+    InitShaders();
+    InitTextures();
+    InitData();
+
 }
 
 bool BaseRender::Step() {
     ProcessInput();
+
     glfwSwapBuffers(window);
     glfwPollEvents();
     return glfwWindowShouldClose(window) == GL_TRUE;
@@ -66,9 +71,12 @@ bool BaseRender::Step() {
 void BaseRender::Draw() {
     glClearColor(0.4, 0.5, 0.6, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    shader->Use();
+    shaders[0]->Use();
     glBindVertexArray(VAOs[0]);
-    glDrawArrays(GL_TRIANGLES, 0, 9);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tex_output);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
 }
 
 void BaseRender::ProcessInput() {
@@ -79,9 +87,10 @@ void BaseRender::ProcessInput() {
 void BaseRender::InitData() {
 
     float data[] = {
-            -1, -1, 0,
-            1, -1, 0,
-            0, 1, 0
+            0.8f,  0.8f, 0.0f,  1.0f, 1.0f,   // 右上
+            0.8f, -0.8f, 0.0f,  1.0f, 0.0f,   // 右下
+            -0.8f, -0.8f, 0.0f,  0.0f, 0.0f,   // 左下
+            -0.8f,  0.8f, 0.0f,  0.0f, 1.0f    // 左上
     };
 
     GLuint vao, vbo;
@@ -92,12 +101,62 @@ void BaseRender::InitData() {
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float )));
+    glEnableVertexAttribArray(1);
     VAOs.push_back(vao);
     VBOs.push_back(vbo);
 }
 
 void BaseRender::InitShaders() {
-    shader = new Shader(v_glsl.data(), f_glsl.data());
+    auto* shader = new Shader(v_glsl.data(), f_glsl.data());
+    shaders.emplace_back(shader);
+    auto* compute_shader = new Shader("../glsl/compute.glsl");
+    shaders.emplace_back(compute_shader);
+    CheckWorkGroupMaxValue();
+}
+
+void BaseRender::InitTextures() {
+    glGenTextures(1, &tex_output);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tex_output);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width * 0.8, height * 0.8, 0, GL_RGBA, GL_FLOAT,NULL);
+    glBindImageTexture(0, tex_output, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+}
+
+void BaseRender::RunComputeShader() {
+    assert(shaders.size() >= 1);
+    assert(shaders[1]);
+    shaders[1]->Use();
+
+    glDispatchCompute(width/24, height/24, 1);
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+}
+
+void BaseRender::CheckWorkGroupMaxValue() {
+    int work_grp_cnt[3];
+
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
+
+    printf("max global (total) work group counts x:%i y:%i z:%i\n",
+           work_grp_cnt[0], work_grp_cnt[1], work_grp_cnt[2]);
+    int work_grp_size[3];
+
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_grp_size[0]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_grp_size[1]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_grp_size[2]);
+
+    printf("max local (in one shader) work group sizes x:%i y:%i z:%i\n",
+           work_grp_size[0], work_grp_size[1], work_grp_size[2]);
+}
+
+void BaseRender::Start() {
+    time_st = glfwGetTime();
 }

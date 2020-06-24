@@ -25,14 +25,13 @@ public:
     void Initialize();
     bool Step();
     void Draw();
-    void InitData();
+    void Start();
 
-
-    void InitShaders();
+    void RunComputeShader();
 
 protected:
     GLFWwindow *window;
-    Shader* shader;
+    std::vector<Shader*> shaders;
     double height;
     double width;
 
@@ -41,7 +40,17 @@ protected:
 
     std::vector<GLuint> VAOs;
     std::vector<GLuint> VBOs;
+    GLuint tex_output;
+
     void ProcessInput();
+    void InitData();
+    void InitShaders();
+    void InitTextures();
+
+    void CheckWorkGroupMaxValue();
+
+    double time_st;
+
 };
 
 
