@@ -1,0 +1,24 @@
+#pragma once
+#include <GL/glew.h>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <iostream>
+
+class Shader
+{
+public:
+	Shader(const char* vertex_file_path, const char* fragment_file_path);
+	~Shader();
+	GLuint						GetShaderID() const;
+	void						Use();
+
+private:
+	GLuint						LoadShader(const char* vertex_file_path, const char* fragment_file_path);
+	std::string					ReadShaderFile(const char* file_path);
+	void						CompileShaders(GLuint ID, const char* ShaderPointer);
+	GLint						Check(GLuint ID);
+	GLuint						_id;
+
+};
+
