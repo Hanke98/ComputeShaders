@@ -53,11 +53,9 @@ void BaseRender::Initialize() {
 //    glfwSetCursorPosCallback(window, MouseFunc);
 
     glEnable(GL_DEPTH_TEST);
-
     InitShaders();
     InitTextures();
     InitData();
-
 }
 
 bool BaseRender::Step() {
@@ -76,7 +74,6 @@ void BaseRender::Draw() {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex_output);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
 }
 
 void BaseRender::ProcessInput() {
@@ -118,6 +115,15 @@ void BaseRender::InitShaders() {
 }
 
 void BaseRender::InitTextures() {
+    int size = width * 0.8 * height * 0.8 * 4;
+    float *data = new float [size];
+    for(int i = 0; i < size; i+=4) {
+        data[i] = 0.5f;
+        data[i + 1] = 0.f;
+        data[i + 2] = 0.f;
+        data[i + 3] = 1.f;
+    }
+
     glGenTextures(1, &tex_output);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex_output);
@@ -125,7 +131,7 @@ void BaseRender::InitTextures() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width * 0.8, height * 0.8, 0, GL_RGBA, GL_FLOAT,NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width * 0.8, height * 0.8, 0, GL_RGBA, GL_FLOAT,data);
     glBindImageTexture(0, tex_output, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 }
 

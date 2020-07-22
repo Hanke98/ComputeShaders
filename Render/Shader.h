@@ -13,7 +13,7 @@ public:
 	~Shader();
 	GLuint						GetShaderID() const;
 	void						Use();
-
+    void                        SetFloat(const char* name, GLfloat data);
 private:
 	GLuint						LoadShader(const char* vertex_file_path, const char* fragment_file_path);
 	std::string					ReadShaderFile(const char* file_path);

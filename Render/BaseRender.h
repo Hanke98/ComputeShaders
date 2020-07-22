@@ -24,10 +24,10 @@ public:
 
     void Initialize();
     bool Step();
-    void Draw();
     void Start();
 
-    void RunComputeShader();
+    virtual void Draw();
+    virtual void RunComputeShader();
 
 protected:
     GLFWwindow *window;
@@ -43,9 +43,9 @@ protected:
     GLuint tex_output;
 
     void ProcessInput();
-    void InitData();
-    void InitShaders();
-    void InitTextures();
+    virtual void InitData();
+    virtual void InitShaders();
+    virtual void InitTextures();
 
     void CheckWorkGroupMaxValue();
 

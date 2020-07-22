@@ -116,3 +116,7 @@ GLuint Shader::LoadComputeShader(const char *cs_file_path) {
     return program_id;
 }
 
+void Shader::SetFloat(const char *name, GLfloat data) {
+    glUniform1f(glGetUniformLocation(_id, name), data);
+}
+

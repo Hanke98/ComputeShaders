@@ -3,6 +3,18 @@ project(ComputeShaders)
 
 set(CMAKE_CXX_STANDARD 17)
 
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    message(STATUS "Build type: debug")
+    add_definitions("-O0 -g -Wall -fPIC")
+elseif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    message(STATUS "Build type: release")
+    add_definitions("-O3 -g -fPIC")
+else()
+    message(STATUS "Build type: release(default)")
+    add_definitions("-O3 -fPIC")
+endif()
+
+
 find_package(OpenGL REQUIRED)
 if (OPENGL_FOUND)
     include_directories(${OPENGL_INCLUDE_DIR})
@@ -18,7 +30,8 @@ include_directories(${GLEW_INCLUDE_DIRS})
 link_directories(${GLEW_LIBRARY_DIRS})
 
 add_subdirectory(Render)
+add_subdirectory(Utils)
 set(third_libs glfw GLEW)
-set(libs RENDER)
+set(libs RENDER UTILS)
 add_executable(ComputeShaders main.cpp)
 target_link_libraries(ComputeShaders ${third_libs} ${libs})
